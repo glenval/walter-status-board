@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walter Status Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2f6f1;
+    --surface: #ffffff;
+    --ink: #172018;
+    --ink-2: #55634f;
+    --ink-3: #85927f;
+    --line: #d7e0d3;
+    --accent-ink: #6e4416;
+    --up: #24815a;
+    --down: #b23a5e;
+    --unknown: #85927f;
+    --shadow: 0 1px 2px rgba(23, 32, 24, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10150f; --surface: #161d15; --ink: #e9efe6; --ink-2: #a9b6a3;
+      --ink-3: #74836e; --line: #2a352686; --accent-ink: #f0b876;
+      --up: #6bd7a5; --down: #f0819f; --unknown: #9aab9c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); margin: 0;
+    font-family: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    padding: 28px 20px 60px; max-width: 760px; margin-inline: auto;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", monospace; }
+  header {
+    display: flex; flex-direction: column; gap: 8px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 22px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent-ink); font-weight: 600;
+  }
+  h1 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .dek { color: var(--ink-2); font-size: 0.88rem; line-height: 1.5; margin: 0; max-width: 60ch; }
+
+  .board { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 14px 18px; box-shadow: var(--shadow);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+  }
+  .row.up { background: color-mix(in srgb, var(--up) 12%, var(--surface)); border-color: var(--up); }
+  .row.down { background: color-mix(in srgb, var(--down) 12%, var(--surface)); border-color: var(--down); }
+
+  .led {
+    width: 18px; height: 18px; border-radius: 50%; flex: none;
+    background: var(--unknown); transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .led.up { background: var(--up); box-shadow: 0 0 0 5px color-mix(in srgb, var(--up) 22%, transparent); }
+  .led.down { background: var(--down); box-shadow: 0 0 0 5px color-mix(in srgb, var(--down) 22%, transparent); }
+
+  .row-body { flex: 1; min-width: 0; }
+  .row-name { font-size: 0.98rem; font-weight: 600; }
+  .row-desc { font-size: 0.78rem; color: var(--ink-3); margin-top: 1px; }
+  .row-right { text-align: right; flex: none; }
+  .row-state {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; font-weight: 700; color: var(--ink-3);
+  }
+  .row-state.up { color: var(--up); }
+  .row-state.down { color: var(--down); }
+  .row-last { font-size: 0.74rem; color: var(--ink-2); margin-top: 2px; }
+
+  footer {
+    margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: 0.76rem; color: var(--ink-3); line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="eyebrow">Live &middot; polls every 30s</span>
+  <h1>Walter Status Board</h1>
+  <p class="dek">Real data from three live sources. Green = active, red = not active, by each
+    row's own definition (see footer) &mdash; not all three mean the same thing.</p>
+</header>
+
+<div class="board">
+  <div class="row" id="row-adafruit">
+    <span class="led" id="led-adafruit"></span>
+    <div class="row-body">
+      <div class="row-name">Adafruit IO &mdash; <span class="mono">gps</span> feed</div>
+      <div class="row-desc">last GNSS fix posted by Walter</div>
+    </div>
+    <div class="row-right">
+      <div class="row-state" id="state-adafruit">checking…</div>
+      <div class="row-last" id="last-adafruit">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="row" id="row-healthchecks">
+    <span class="led" id="led-healthchecks"></span>
+    <div class="row-body">
+      <div class="row-name">healthchecks.io &mdash; home check-in</div>
+      <div class="row-desc">dead-man's-switch monitor, 13min window</div>
+    </div>
+    <div class="row-right">
+      <div class="row-state" id="state-healthchecks">checking…</div>
+      <div class="row-last" id="last-healthchecks">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="row" id="row-hologram">
+    <span class="led" id="led-hologram"></span>
+    <div class="row-body">
+      <div class="row-name">Hologram &mdash; SIM/cellular link</div>
+      <div class="row-desc">last cellular session, ExperSpeed LLC org</div>
+    </div>
+    <div class="row-right">
+      <div class="row-state" id="state-hologram">checking…</div>
+      <div class="row-last" id="last-hologram">&nbsp;</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>Adafruit IO</b>: green if a <span class="mono">gps</span> point posted within the last 15 min &mdash;
+  red just means Walter hasn't taken a fix recently (disarmed or sitting at home is normal, not broken).
+  <b>healthchecks.io</b>: green/red directly from its own up/down state (13min window), scoped to the
+  "anti-theft" tag so it only reflects Walter's check, not your whole account.
+  <b>Hologram</b>: green if the SIM's last cellular session was within 15 min. Uses a full-permission
+  Hologram API key embedded in this file (read-only calls only, but the key itself isn't scoped down) &mdash;
+  keep this file local, don't publish it anywhere.
+</footer>
+
+<script>
+(function () {
+  var POLL_MS = 30000;
+  var FRESH_MS = 15 * 60 * 1000; // 15 min freshness window for timestamp-based rows
+
+  function setRow(prefix, isUp, stateText, lastText) {
+    var row = document.getElementById("row-" + prefix);
+    var led = document.getElementById("led-" + prefix);
+    var state = document.getElementById("state-" + prefix);
+    var last = document.getElementById("last-" + prefix);
+    var cls = isUp === true ? "up" : isUp === false ? "down" : "";
+    row.className = "row" + (cls ? " " + cls : "");
+    led.className = "led" + (cls ? " " + cls : "");
+    state.className = "row-state" + (cls ? " " + cls : "");
+    state.textContent = stateText;
+    last.textContent = lastText;
+  }
+
+  function fmtAgo(dateObj) {
+    var s = Math.round((Date.now() - dateObj.getTime()) / 1000);
+    if (s < 60) return s + "s ago";
+    if (s < 3600) return Math.round(s / 60) + "m ago";
+    return Math.round(s / 3600) + "h ago";
+  }
+
+  // --- Adafruit IO ---
+  function pollAdafruit() {
+    var url = "https://io.adafruit.com/api/v2/VladBites/feeds/gps/data/last?x-aio-key=aio_eWNE31crVoYxXk6TpIwMIgCbAf3m";
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        if (!d || !d.created_at) { setRow("adafruit", null, "no data yet", ""); return; }
+        var t = new Date(d.created_at);
+        var fresh = (Date.now() - t.getTime()) < FRESH_MS;
+        setRow("adafruit", fresh, fresh ? "ACTIVE" : "NOT ACTIVE", t.toLocaleString() + " (" + fmtAgo(t) + ")");
+      })
+      .catch(function (e) { setRow("adafruit", null, "fetch error", e.message); });
+  }
+
+  // --- healthchecks.io ---
+  function pollHealthchecks() {
+    var url = "https://healthchecks.io/badge/d2154fd2-4941-4d30-bc39-bd30e6/de5Iy6hb-2/anti-theft.json";
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        var isUp = d.status === "up";
+        var now = new Date();
+        setRow("healthchecks", isUp, isUp ? "ACTIVE" : "NOT ACTIVE",
+               "checked " + now.toLocaleTimeString() + " — " + d.down + "/" + d.total + " down");
+      })
+      .catch(function (e) { setRow("healthchecks", null, "fetch error", e.message); });
+  }
+
+  // --- Hologram ---
+  function pollHologram() {
+    var url = "https://dashboard.hologram.io/api/1/devices?orgid=109874";
+    var key = "6Gxl1JFFmavozsGAgi12fsJGDBbqid";
+    fetch(url, {
+      cache: "no-store",
+      headers: { "Authorization": "Basic " + btoa("apikey:" + key) }
+    })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        var dev = d && d.data && d.data[0];
+        if (!dev) { setRow("hologram", null, "no device found", ""); return; }
+        var cellLink = dev.links && dev.links.cellular && dev.links.cellular[0];
+        var lastConnectStr = cellLink && cellLink.last_connect_time;
+        var activeFlag = dev.lastsession && dev.lastsession.active;
+        var t = lastConnectStr ? new Date(lastConnectStr.replace(" ", "T") + "Z") : null;
+        var fresh = t ? (Date.now() - t.getTime()) < FRESH_MS : false;
+        var isUp = activeFlag === true || fresh;
+        setRow("hologram", isUp, isUp ? "ACTIVE" : "NOT ACTIVE",
+               t ? (t.toLocaleString() + " (" + fmtAgo(t) + ")") : "no session data");
+      })
+      .catch(function (e) { setRow("hologram", null, "fetch error (likely CORS)", e.message); });
+  }
+
+  function pollAll() { pollAdafruit(); pollHealthchecks(); pollHologram(); }
+  pollAll();
+  setInterval(pollAll, POLL_MS);
+})();
+</script>
+
+</body>
+</html>
