@@ -115,6 +115,18 @@
     </div>
   </div>
 
+  <div class="row" id="row-sms">
+    <span class="led" id="led-sms"></span>
+    <div class="row-body">
+      <div class="row-name">STATUS SMS reply &mdash; <span class="mono">sms-event</span> feed</div>
+      <div class="row-desc">last time Walter replied to a STATUS text</div>
+    </div>
+    <div class="row-right">
+      <div class="row-state" id="state-sms">checking…</div>
+      <div class="row-last" id="last-sms">&nbsp;</div>
+    </div>
+  </div>
+
 </div>
 
 <footer>
@@ -122,6 +134,9 @@
   red just means Walter hasn't taken a fix recently (disarmed or sitting at home is normal, not broken).
   <b>healthchecks.io</b>: green/red directly from its own up/down state (13min window), scoped to the
   "anti-theft" tag so it only reflects Walter's check, not your whole account.
+  <b>STATUS SMS reply</b>: gray/informational, not red/green &mdash; it only updates when you text
+  <span class="mono">STATUS</span> to Walter, so a long "ago" time just means you haven't asked recently, not
+  that anything's broken.
   <b>Cellular/SIM status</b> isn't shown here &mdash; check
   <a href="https://dashboard.hologram.io" target="_blank" rel="noopener">dashboard.hologram.io</a> directly for that.
 </footer>
@@ -179,7 +194,20 @@
       .catch(function (e) { setRow("healthchecks", null, "fetch error", e.message); });
   }
 
-  function pollAll() { pollAdafruit(); pollHealthchecks(); }
+  // --- STATUS SMS reply (on-demand, not periodic -- informational only, no up/down coloring) ---
+  function pollSms() {
+    var url = "https://io.adafruit.com/api/v2/VladBites/feeds/sms-event/data/last?x-aio-key=aio_eWNE31crVoYxXk6TpIwMIgCbAf3m";
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        if (!d || !d.created_at) { setRow("sms", null, "no data yet", ""); return; }
+        var t = new Date(d.created_at);
+        setRow("sms", null, "LAST REPLY", t.toLocaleString() + " (" + fmtAgo(t) + ")");
+      })
+      .catch(function (e) { setRow("sms", null, "fetch error", e.message); });
+  }
+
+  function pollAll() { pollAdafruit(); pollHealthchecks(); pollSms(); }
   pollAll();
   setInterval(pollAll, POLL_MS);
 })();
