@@ -16,8 +16,8 @@
     --ink-3: #85927f;
     --line: #d7e0d3;
     --accent-ink: #6e4416;
-    --up: #24815a;
-    --down: #b23a5e;
+    --up: #39ff14;
+    --down: #ff0037;
     --unknown: #85927f;
     --shadow: 0 1px 2px rgba(23, 32, 24, 0.06);
   }
@@ -25,7 +25,7 @@
     :root {
       --bg: #10150f; --surface: #161d15; --ink: #e9efe6; --ink-2: #a9b6a3;
       --ink-3: #74836e; --line: #2a352686; --accent-ink: #f0b876;
-      --up: #6bd7a5; --down: #f0819f; --unknown: #9aab9c;
+      --up: #39ff14; --down: #ff0037; --unknown: #9aab9c;
       --shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
   }
@@ -54,15 +54,29 @@
     padding: 14px 18px; box-shadow: var(--shadow);
     transition: background-color 0.4s ease, border-color 0.4s ease;
   }
-  .row.up { background: color-mix(in srgb, var(--up) 12%, var(--surface)); border-color: var(--up); }
-  .row.down { background: color-mix(in srgb, var(--down) 12%, var(--surface)); border-color: var(--down); }
+  .row.up {
+    background: color-mix(in srgb, var(--up) 10%, var(--surface));
+    border-color: var(--up);
+    box-shadow: 0 0 14px 1px color-mix(in srgb, var(--up) 45%, transparent), var(--shadow);
+  }
+  .row.down {
+    background: color-mix(in srgb, var(--down) 10%, var(--surface));
+    border-color: var(--down);
+    box-shadow: 0 0 14px 1px color-mix(in srgb, var(--down) 45%, transparent), var(--shadow);
+  }
 
   .led {
     width: 18px; height: 18px; border-radius: 50%; flex: none;
     background: var(--unknown); transition: background-color 0.4s ease, box-shadow 0.4s ease;
   }
-  .led.up { background: var(--up); box-shadow: 0 0 0 5px color-mix(in srgb, var(--up) 22%, transparent); }
-  .led.down { background: var(--down); box-shadow: 0 0 0 5px color-mix(in srgb, var(--down) 22%, transparent); }
+  .led.up {
+    background: var(--up);
+    box-shadow: 0 0 8px 2px var(--up), 0 0 18px 6px color-mix(in srgb, var(--up) 60%, transparent);
+  }
+  .led.down {
+    background: var(--down);
+    box-shadow: 0 0 8px 2px var(--down), 0 0 18px 6px color-mix(in srgb, var(--down) 60%, transparent);
+  }
 
   .row-body { flex: 1; min-width: 0; }
   .row-name { font-size: 0.98rem; font-weight: 600; }
@@ -71,8 +85,8 @@
   .row-state {
     font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; font-weight: 700; color: var(--ink-3);
   }
-  .row-state.up { color: var(--up); }
-  .row-state.down { color: var(--down); }
+  .row-state.up { color: var(--up); text-shadow: 0 0 8px color-mix(in srgb, var(--up) 70%, transparent); }
+  .row-state.down { color: var(--down); text-shadow: 0 0 8px color-mix(in srgb, var(--down) 70%, transparent); }
   .row-last { font-size: 0.74rem; color: var(--ink-2); margin-top: 2px; }
 
   footer {
